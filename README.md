@@ -2,3 +2,4 @@
 Access bitwarden with a simple dmenu script
 
 dmenu-password patch is required so the password can be hidden during login
+jq is required for bw-cli output parsing
