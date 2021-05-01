@@ -1,0 +1,32 @@
+#!/bin/bash
+
+_login()
+{
+	notify-send -u normal "Bitwarden" "Login is required"
+	user_email=$(echo "" | dmenu -p "Bitarden email")
+	password=$(dmenu -P -p "Bitwarden password")
+	token=$(bw login "$user_email" "$password" | awk '/export/ {print $3}' | sed 's/"//g' | cut -d'=' -f2)
+}
+
+# Check login status. If email isn't available, login
+email=$(bw status | jq '.userEmail')
+[[ "$email" == "null" ]] && _login
+
+# Unlock the vault
+[ -z $token ] && token=$(bw unlock $(dmenu -P -p "Password") | awk '/export/ {print $3}' | sed 's/"//g' | cut -d'=' -f2)
+
+# Set the token
+export BW_SESSION=$token
+
+# Get account name
+accountName=$(echo "" | dmenu -p "Account name")
+
+# Copy password to clipboard
+bw get password $accountName | xsel -b
+
+# Clear up clipboard with random garbage after 5 seconds and complete wipe after 2 seconds
+sleep 5
+head -c 20 /dev/random | xsel -b
+sleep 2
+xsel --clear --delete
+notify-send -t 2000 "Bitwarden" "Clipboard cleared"
